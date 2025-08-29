@@ -23,7 +23,6 @@ textract = boto3.client(
     region_name           = os.getenv("AWS_REGION") or "us-east-2"
 )
 
-
 # ── STREAMLIT UI ────────────────────────────────────────────────────────────
 st.set_page_config(page_title="AI Translator - Certifikata Lindje", layout="centered")
 st.title("Certifikata Lindje: Shqip - Italisht")
