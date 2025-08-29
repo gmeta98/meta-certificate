@@ -35,7 +35,6 @@ import streamlit as st
 
 st.title("Certifikata Lindje: Shqip - Italisht")
 
-
 # --- Simple password gate (one shared password) ---
 password = st.text_input("Password", type="password")
 if "APP_PASSWORD" not in st.secrets:
@@ -44,7 +43,6 @@ if password != st.secrets["APP_PASSWORD"]:
     st.warning("Enter the password to continue")
     st.stop()
 # ---------------------------------------------------
-
 
 # ── HELPER: Stato Civile from vertical checkboxes ───────────────────────────
 def get_stato_from_vertical_boxes(blocks, bmap, gender=""):
