@@ -59,7 +59,7 @@ def get_stato_from_vertical_boxes(blocks, bmap, gender=""):
     • Returns the gender-specific Italian form
         (celibe / nubile, coniugato / coniugata, divorziato / divorziata, vedovo / vedova).
 
-    `gender` should be the already-extracted “Maschio” or “Femminile”.
+    `gender` should be the already-extracted "Maschile" or “Femminile”.
     """
 
     fragments = [
@@ -142,7 +142,6 @@ def docx_bytes_to_pdf_bytes(docx_bytes: bytes) -> bytes:
         # read PDF back into memory
         with open(pdf_path, "rb") as f:
             return f.read()
-
 
 
 # ── HELPER: Get Seal Block (last 2 lines) ────────────────────────────────────
@@ -241,7 +240,7 @@ def extract_table_fields(blocks, bmap):
         rows[9][2] = res_clean
 
     sesso_raw = rows.get(10, {}).get(2, "").strip().upper()
-    if   sesso_raw == "M": sesso_val = "Maschio"
+    if   sesso_raw == "M": sesso_val = "Maschile"
     elif sesso_raw == "F": sesso_val = "Femminile"
     else:                  sesso_val = sesso_raw
 
@@ -346,7 +345,7 @@ def make_docx(data):
     tbl.autofit = False  # we’ll control widths
 
     # Page inner width ≈ 21cm - 2cm - 2cm = 17cm
-    left_w, right_w = Cm(9.5), Cm(7.5)  # tweak as you like; sum <= ~17cm
+    left_w, right_w = Cm(9), Cm(8)  # tweak as you like; sum <= ~17cm
     tbl.columns[0].width = left_w
     tbl.columns[1].width = right_w
 
@@ -466,8 +465,12 @@ def make_docx(data):
         para_left.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
         # right cell (value)
+        if k == "Cognome prima del matrimonio":
+            display_val = v.strip() if v and v.strip() else "-------"
+        else:
+            display_val = v or ""
         para_right = cells[1].paragraphs[0]
-        run_right = para_right.add_run(v)
+        run_right = para_right.add_run(display_val)
         run_right.font.name = 'Times New Roman'
         run_right.font.size = Pt(11)
         run_right.font.color.rgb = RGBColor(0, 0, 0)
