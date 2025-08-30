@@ -245,7 +245,7 @@ def extract_table_fields(blocks, bmap):
     else:                  sesso_val = sesso_raw
 
 
-    return {
+    result = {
         "Nome":              rows.get(2,  {}).get(2,""),
         "Cognome":           rows.get(3,  {}).get(2,""),
         "Numero personale":  rows.get(4,  {}).get(2,""),
@@ -259,9 +259,10 @@ def extract_table_fields(blocks, bmap):
         "Cittadinanza":      rows.get(12, {}).get(2,""),
         "Cognome prima del matrimonio": rows.get(13, {}).get(2,""),
         "Data del rilascio": rows.get(14, {}).get(2,""),
-        "ElectronicSeal":    extract_seal_footer(blocks)
+        "ElectronicSeal":    extract_seal_footer(blocks),
     }
 
+    # Normalize place names
     for k in ("Luogo di nascita", "Residenza"):
         result[k] = map_exonyms(result.get(k, ""))
 
