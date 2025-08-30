@@ -422,6 +422,13 @@ def make_docx(data):
     tbl = doc.add_table(rows=0, cols=2)
     tbl.style = "Table Grid"
 
+    # 👇 turn off auto-fit
+    tbl.autofit = False
+
+    # 👇 explicitly set column widths
+    tbl.columns[0].width = Cm(9.1)   # left column
+    tbl.columns[1].width = Cm(7.9)  # right column
+
     for k, v in fields:
         if v is None:
             # special: merge the two cells for this row
