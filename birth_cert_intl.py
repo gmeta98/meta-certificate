@@ -24,16 +24,16 @@ textract = boto3.client(
 )
 
 # ── STREAMLIT UI ────────────────────────────────────────────────────────────
-st.set_page_config(page_title="AI Translator - Certifikata Lindje", layout="centered")
-st.title("Certifikata Lindje: Shqip - Italisht")
-st.markdown("Upload one or many birth certificates and download the Italian DOCX.")
+st.set_page_config(page_title="Lindje Internacionale", layout="centered")
+st.title("Certifikata Lindje Internacionale\nShqip - Italisht")
+st.markdown("Ngarko nje ose me shume certifikata lindje internacionale dhe shkarko versionin italisht DOCX.")
 
-uploaded_files = st.file_uploader("Upload certificate(s)", type=["pdf", "jpg", "jpeg", "png"], accept_multiple_files=True)
+uploaded_files = st.file_uploader("Ngarko certifikata", type=["pdf", "jpg", "jpeg", "png"], accept_multiple_files=True)
 download_format = st.selectbox("Output format", ["Word (.docx)", "PDF (.pdf)"])
 
 import streamlit as st
 
-st.title("Certifikata Lindje: Shqip - Italisht")
+st.title("Perkthimi i Certifikates")
 
 # --- Simple password gate (one shared password) ---
 password = st.text_input("Password", type="password")
@@ -362,10 +362,14 @@ def make_docx(data):
     # left header cell
     cell1 = row.cells[0]
     p1 = cell1.paragraphs[0]
+    
+    # add an empty line first
+    p1.add_run("\n")
+
     img_path = os.path.join(os.getcwd(), "al_flag.png")
     if os.path.exists(img_path):
         r = p1.add_run()
-        r.add_picture(img_path, width=Cm(0.9))
+        r.add_picture(img_path, width=Cm(0.7))
     r = p1.add_run("\n\nREPUBBLICA D'ALBANIA\n")
     r.bold = True
     r.font.name = 'Times New Roman'
@@ -378,7 +382,7 @@ def make_docx(data):
     p2 = cell2.paragraphs[0]
     lines = []
     if data.get("Comune"):
-        lines.append(f"Ufficio di Stato Civile Comune di {data['Comune']}")
+        lines.append(f"\n\nUfficio di Stato Civile Comune di {data['Comune']}")
     if data.get("Sezione"):
         lines.append(f"Sezione Amministrativa {data['Sezione']}")
     r = p2.add_run("\n".join(lines))
@@ -418,9 +422,9 @@ def make_docx(data):
         ("Cognome prima del matrimonio",data["Cognome prima del matrimonio"]),
         ("Data del rilascio", data["Data del rilascio"]),
         # 👇 Last row as a special marker
-        ("Timbrato elettronicamente dalla Direzione Generale dello Stato Civile\n\n", None),
+        ("\nTimbrato elettronicamente dalla Direzione Generale dello Stato Civile\n", None),
     ]
-    
+
     for k, v in fields:
         if v is None:
             # special: merged last row
@@ -523,7 +527,7 @@ def make_docx(data):
 
 
 # ── MAIN FLOW ───────────────────────────────────────────────────────────────
-if uploaded_files and st.button("Translate"):
+if uploaded_files and st.button("Perkthe"):
     if len(uploaded_files) == 1:
         # Single file logic
         uploaded_file = uploaded_files[0]
