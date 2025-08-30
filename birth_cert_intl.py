@@ -13,7 +13,6 @@ from docx.shared import Cm
 from docx.shared import Mm
 import tempfile, os
 
-
 # ── AWS / ENV ───────────────────────────────────────────────────────────────
 load_dotenv()
 textract = boto3.client(
@@ -188,6 +187,21 @@ def extract_seal_footer(blocks):
     ])
 
 
+# ── HELPER: Albanian→Italian place exonyms ──────────────────────────────────
+EXONYM_RULES = [
+    (r"\bTiran[ëe]\b",   "Tirana"),
+    (r"\bVlor[ëe]\b",    "Valona"),
+    (r"\bDurr[ëe]s\b",   "Durazzo"),
+    (r"\bShkod[ëe]r\b",  "Scutari"),
+]
+
+def map_exonyms(text: str) -> str:
+    if not text:
+        return text
+    out = text
+    for pat, repl in EXONYM_RULES:
+        out = re.sub(pat, repl, out, flags=re.IGNORECASE)
+    return out
 
 
 # ── TABLE-FIELD EXTRACTION ──────────────────────────────────────────────────
@@ -215,7 +229,7 @@ def extract_table_fields(blocks, bmap):
         res_clean = (
             re.sub(r"Nd.",  "Ed.",  res_raw)   # Nd.  → Ed.
             .replace("H.",     "Int.")            # H.   → Int.
-            .replace("Ap.",    "Ap.")             # Ap.  → Ap. (kept the same)
+            .replace("Ap.",    "App.")             # Ap.  → App.
             .replace("Njësia",      "Sezione")
             .replace("Administrative",      "Amministrativa")
             .replace("NJËSIA",      "Sezione")
@@ -248,6 +262,11 @@ def extract_table_fields(blocks, bmap):
         "ElectronicSeal":    extract_seal_footer(blocks)
     }
 
+    for k in ("Luogo di nascita", "Residenza"):
+        result[k] = map_exonyms(result.get(k, ""))
+
+    return result
+
 # ── HEADER (Comune / Sezione) ───────────────────────────────────────────────
 def extract_comune_sezione(blocks):
     lines = [b["Text"] for b in blocks if b["BlockType"] == "LINE"]
@@ -261,7 +280,10 @@ def extract_comune_sezione(blocks):
             if suf.lower() in ("nr.","nr"):
                 suf = suf + " " + (lines[i+1] if i+1 < len(lines) else "")
             sezione = suf.title()
+    # normalize Comune
+    comune = map_exonyms(comune)
     return comune, sezione
+
 
 # ── DOCX TEMPLATE ───────────────────────────────────────────────────────────
 def make_docx(data):
