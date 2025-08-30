@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from docx.shared import Pt, RGBColor
 from docx.oxml.ns import qn
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx.enum.table import WD_ALIGN_VERTICAL
 from docx import Document
 from io import BytesIO
 from datetime import datetime
@@ -266,6 +267,10 @@ def extract_table_fields(blocks, bmap):
     for k in ("Luogo di nascita", "Residenza"):
         result[k] = map_exonyms(result.get(k, ""))
 
+    citt = (result.get("Cittadinanza") or "").strip().upper()
+    if citt in ("ALB", "ALBANIA", "SHQIPTARE", "SHQIPTAR"):
+        result["Cittadinanza"] = "Albanese"
+
     return result
 
 # ── HEADER (Comune / Sezione) ───────────────────────────────────────────────
@@ -283,6 +288,8 @@ def extract_comune_sezione(blocks):
             sezione = suf.title()
     # normalize Comune
     comune = map_exonyms(comune)
+    sezione = map_exonyms(sezione)
+
     return comune, sezione
 
 
@@ -407,15 +414,43 @@ def make_docx(data):
         ("Stato Civile",data["Stato Civile"]),
         ("Cittadinanza",data["Cittadinanza"]),
         ("Cognome prima del matrimonio",data["Cognome prima del matrimonio"]),
-        ("Data del rilascio\n\nTimbrato elettronicamente dalla Direzione Generale dello Stato Civile", data["Data del rilascio"]),
+        ("Data del rilascio", data["Data del rilascio"]),
+        # 👇 Last row as a special marker
+        ("Timbrato elettronicamente dalla Direzione Generale dello Stato Civile", None),
     ]
 
     tbl = doc.add_table(rows=0, cols=2)
     tbl.style = "Table Grid"
 
     for k, v in fields:
+        if v is None:
+            # special: merge the two cells for this row
+            cells = tbl.add_row().cells
+            merged = cells[0].merge(cells[1])
+
+            para = merged.paragraphs[0]
+            run = para.add_run(k)
+            run.font.name = 'Times New Roman'
+            run.font.size = Pt(11)
+            run.font.color.rgb = RGBColor(0, 0, 0)
+            # (optional) style note-like:
+            # run.italic = True
+
+            merged.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            para.paragraph_format.space_before = Pt(5)
+            para.paragraph_format.space_after = Pt(5)
+            para.paragraph_format.line_spacing = 1
+            para.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+            continue
+
+        # normal two-cell rows
         cells = tbl.add_row().cells
-        # Set left cell
+
+        # columnS vertically centered (as you wanted)
+        cells[0].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        cells[1].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+
+        # left cell (label)
         para_left = cells[0].paragraphs[0]
         run_left = para_left.add_run(k)
         run_left.font.name = 'Times New Roman'
@@ -426,7 +461,7 @@ def make_docx(data):
         para_left.paragraph_format.line_spacing = 1
         para_left.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
-        # Set right cell
+        # right cell (value)
         para_right = cells[1].paragraphs[0]
         run_right = para_right.add_run(v)
         run_right.font.name = 'Times New Roman'
