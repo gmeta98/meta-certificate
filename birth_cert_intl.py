@@ -339,55 +339,14 @@ def make_docx(data):
         }.get(align, WD_PARAGRAPH_ALIGNMENT.LEFT)
 
         return p
-
-
-    # === Table: Flag + Republic | Comune + Sezione ===
-    table = doc.add_table(rows=1, cols=2)
-    table.autofit = True
-    table.style = "Table Grid"
-
-    # === Column 1: Flag + REPUBBLICA D'ALBANIA ===
-    cell1 = table.cell(0, 0)
-    p1 = cell1.paragraphs[0]
-
-    # Insert image
-    img_path = os.path.join(os.getcwd(), "al_flag.png")
-    if os.path.exists(img_path):
-        run = p1.add_run()
-        run.add_picture(img_path, width=Cm(0.9))
-
-    # Add text below image
-    run = p1.add_run("\n\nREPUBBLICA D'ALBANIA\n")
-    run.bold = True
-    run.font.name = 'Times New Roman'
-    run.font.size = Pt(11)
-    run.font.color.rgb = RGBColor(0, 0, 0)
-    p1.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-
-    # === Column 2: Comune + Sezione ===
-    cell2 = table.cell(0, 1)
-    text_lines = []
-
-    if data.get("Comune"):
-        text_lines.append(f"\n\n\nUfficio di Stato Civile Comune di {data['Comune']}")
-    if data.get("Sezione"):
-        text_lines.append(f"Sezione Amministrativa {data['Sezione']}")
-
-    p2 = cell2.paragraphs[0]
-    run = p2.add_run("\n".join(text_lines))
-    run.bold = True
-    run.font.name = 'Times New Roman'
-    run.font.size = Pt(11)
-    run.font.color.rgb = RGBColor(0, 0, 0)
-    p2.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-
+    
     # === Single details table: title + rows ===
     tbl = doc.add_table(rows=0, cols=2)
     tbl.style = "Table Grid"
     tbl.autofit = False  # we’ll control widths
 
     # Page inner width ≈ 21cm - 2cm - 2cm = 17cm
-    left_w, right_w = Cm(6), Cm(10)  # tweak as you like; sum <= ~17cm
+    left_w, right_w = Cm(9.5), Cm(7.5)  # tweak as you like; sum <= ~17cm
     tbl.columns[0].width = left_w
     tbl.columns[1].width = right_w
 
@@ -395,13 +354,46 @@ def make_docx(data):
     def _set_row_widths(row):
         row.cells[0].width = left_w
         row.cells[1].width = right_w
+   
+   # ── Header row (Flag + REPUBBLICA | Comune + Sezione) ──
+    row = tbl.add_row()
+    _set_row_widths(row)
 
+    # left header cell
+    cell1 = row.cells[0]
+    p1 = cell1.paragraphs[0]
+    img_path = os.path.join(os.getcwd(), "al_flag.png")
+    if os.path.exists(img_path):
+        r = p1.add_run()
+        r.add_picture(img_path, width=Cm(0.9))
+    r = p1.add_run("\n\nREPUBBLICA D'ALBANIA\n")
+    r.bold = True
+    r.font.name = 'Times New Roman'
+    r.font.size = Pt(11)
+    p1.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+    cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+
+    # right header cell
+    cell2 = row.cells[1]
+    p2 = cell2.paragraphs[0]
+    lines = []
+    if data.get("Comune"):
+        lines.append(f"Ufficio di Stato Civile Comune di {data['Comune']}")
+    if data.get("Sezione"):
+        lines.append(f"Sezione Amministrativa {data['Sezione']}")
+    r = p2.add_run("\n".join(lines))
+    r.bold = True
+    r.font.name = 'Times New Roman'
+    r.font.size = Pt(11)
+    p2.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+    cell2.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+    
     # ── Title row merged across both columns ──
     row = tbl.add_row()
     _set_row_widths(row)
     merged = row.cells[0].merge(row.cells[1])
     p = merged.paragraphs[0]
-    run = p.add_run("CERTIFICATO DI NASCITA")
+    run = p.add_run("\nCERTIFICATO DI NASCITA\n")
     run.bold = True
     run.font.name = "Times New Roman"
     run.font.size = Pt(11)
@@ -428,17 +420,7 @@ def make_docx(data):
         # 👇 Last row as a special marker
         ("Timbrato elettronicamente dalla Direzione Generale dello Stato Civile\n\n", None),
     ]
-
-    tbl = doc.add_table(rows=0, cols=2)
-    tbl.style = "Table Grid"
-
-    # 👇 turn off auto-fit
-    tbl.autofit = False
-
-    # 👇 explicitly set column widths
-    tbl.columns[0].width = Cm(9.1)   # left column
-    tbl.columns[1].width = Cm(7.9)  # right column
-
+    
     for k, v in fields:
         if v is None:
             # special: merged last row
