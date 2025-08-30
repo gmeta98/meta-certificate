@@ -14,7 +14,6 @@ from docx.shared import Cm
 from docx.shared import Mm
 import tempfile, os
 
-
 # ── AWS / ENV ───────────────────────────────────────────────────────────────
 load_dotenv()
 textract = boto3.client(
