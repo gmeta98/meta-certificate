@@ -380,24 +380,34 @@ def make_docx(data):
     run.font.size = Pt(11)
     run.font.color.rgb = RGBColor(0, 0, 0)
     p2.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-    
-    #table for CERTIFICATO DI NASCITA
-    table = doc.add_table(rows=1, cols=1)
-    table.style = 'Table Grid'
 
-    # Access the only cell and add the paragraph to it
-    cell = table.cell(0, 0)
-    p = cell.paragraphs[0]  # Use the default paragraph already present
+    # === Single details table: title + rows ===
+    tbl = doc.add_table(rows=0, cols=2)
+    tbl.style = "Table Grid"
+    tbl.autofit = False  # we’ll control widths
 
-    # Add the text with styling
-    run = p.add_run("\nCERTIFICATO DI NASCITA\n")
+    # Page inner width ≈ 21cm - 2cm - 2cm = 17cm
+    left_w, right_w = Cm(6), Cm(10)  # tweak as you like; sum <= ~17cm
+    tbl.columns[0].width = left_w
+    tbl.columns[1].width = right_w
+
+    # Some Word versions ignore column widths for new rows unless we reapply:
+    def _set_row_widths(row):
+        row.cells[0].width = left_w
+        row.cells[1].width = right_w
+
+    # ── Title row merged across both columns ──
+    row = tbl.add_row()
+    _set_row_widths(row)
+    merged = row.cells[0].merge(row.cells[1])
+    p = merged.paragraphs[0]
+    run = p.add_run("CERTIFICATO DI NASCITA")
     run.bold = True
-    run.font.name = 'Times New Roman'
+    run.font.name = "Times New Roman"
     run.font.size = Pt(11)
-    run.font.color.rgb = RGBColor(0, 0, 0)
+
     p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
 
-    # Optional: Adjust spacing
     p.paragraph_format.space_before = Pt(0)
     p.paragraph_format.space_after = Pt(0)
     p.paragraph_format.line_spacing = 1
@@ -431,17 +441,16 @@ def make_docx(data):
 
     for k, v in fields:
         if v is None:
-            # special: merge the two cells for this row
-            cells = tbl.add_row().cells
-            merged = cells[0].merge(cells[1])
+            # special: merged last row
+            row = tbl.add_row()
+            _set_row_widths(row)
+            merged = row.cells[0].merge(row.cells[1])
 
             para = merged.paragraphs[0]
             run = para.add_run(k)
             run.font.name = 'Times New Roman'
             run.font.size = Pt(11)
             run.font.color.rgb = RGBColor(0, 0, 0)
-            # (optional) style note-like:
-            # run.italic = True
 
             merged.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
             para.paragraph_format.space_before = Pt(5)
@@ -450,10 +459,12 @@ def make_docx(data):
             para.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
             continue
 
-        # normal two-cell rows
-        cells = tbl.add_row().cells
+        # normal two-cell row
+        row = tbl.add_row()
+        _set_row_widths(row)
+        cells = row.cells
 
-        # columnS vertically centered (as you wanted)
+        # vertical center left label only (or both if you prefer)
         cells[0].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
         cells[1].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
@@ -478,6 +489,7 @@ def make_docx(data):
         para_right.paragraph_format.space_after = Pt(5)
         para_right.paragraph_format.line_spacing = 1
         para_right.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
       
 
     # Electronic Seal
