@@ -369,7 +369,7 @@ def make_docx(data):
     text_lines = []
 
     if data.get("Comune"):
-        text_lines.append(f"\nUfficio di Stato Civile Comune di {data['Comune']}")
+        text_lines.append(f"\n\n\nUfficio di Stato Civile Comune di {data['Comune']}")
     if data.get("Sezione"):
         text_lines.append(f"Sezione Amministrativa {data['Sezione']}")
 
@@ -416,7 +416,7 @@ def make_docx(data):
         ("Cognome prima del matrimonio",data["Cognome prima del matrimonio"]),
         ("Data del rilascio", data["Data del rilascio"]),
         # 👇 Last row as a special marker
-        ("Timbrato elettronicamente dalla Direzione Generale dello Stato Civile", None),
+        ("Timbrato elettronicamente dalla Direzione Generale dello Stato Civile\n\n", None),
     ]
 
     tbl = doc.add_table(rows=0, cols=2)
