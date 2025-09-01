@@ -44,6 +44,7 @@ if password != st.secrets["APP_PASSWORD"]:
     st.stop()
 # ---------------------------------------------------
 
+
 # ── HELPER: Stato Civile from vertical checkboxes ───────────────────────────
 def get_stato_from_vertical_boxes(blocks, bmap, gender=""):
     """
